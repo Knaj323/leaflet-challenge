@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Earthquake Map</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin="" />
+
+  <!-- Our CSS -->
+  <style>
+    #map {
+      height: 600px;
+      width: 800px;
+    }
+
+    .legend {
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+      line-height: 18px;
+      color: #555;
+    }
+
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+
+<body>
+<div id="map"></div>
+  <div class="legend">
+    <h4>Depth Legend</h4>
+    <div><i style="background:#00FF00"></i> &lt; 10 km</div>
+    <div><i style="background:#FFFF00"></i> 10 - 30 km</div>
+    <div><i style="background:#FFA500"></i> 30 - 50 km</div>
+    <div><i style="background:#FF0000"></i> &gt; 50 km</div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+  <!-- D3 JavaScript -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- Our JavaScript -->
+  <script>
+    var map = L.map('map').setView([0, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    function getMarkerSize(magnitude) {
+      return magnitude * 5;
+    }
+
+    function getMarkerColor(depth) {
+      if (depth < 10) {
+        return "#00FF00"; // Green
+      } else if (depth < 30) {
+        return "#FFFF00"; // Yellow
+      } else if (depth < 50) {
+        return "#FFA500"; // Orange
+      } else {
+        return "#FF0000"; // Red
+      }
+    }
+
+    fetch('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson')
+      .then(response => response.json())
+      .then(data => {
+        L.geoJSON(data, {
+          pointToLayer: function (feature, latlng) {
+            return L.circleMarker(latlng, {
+              radius: getMarkerSize(feature.properties.mag),
+              fillColor: getMarkerColor(feature.geometry.coordinates[2]),
+              color: "#000",
+              weight: 1,
+              opacity: 1,
+              fillOpacity: 0.8
+            }).bindPopup("<b>Location:</b> " + feature.properties.place + "<br><b>Magnitude:</b> " + feature.properties.mag + "<br><b>Depth:</b> " + feature.geometry.coordinates[2] + " km");
+          }
+        }).addTo(map);
+      });
+  </script>
+</body>
+
+</html>
